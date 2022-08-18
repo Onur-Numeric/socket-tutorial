@@ -102,7 +102,7 @@ int main() {
         char response[1024];
         int bytes_received = recv(client_socket, response, 1024, 0);
         printf("Received %d bytes", bytes_received);
-        printf(" - %.*s", bytes_received);
+        printf(" - %s", response);
         puts("");
 
 

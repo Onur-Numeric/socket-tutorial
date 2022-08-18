@@ -79,9 +79,8 @@ int main() {
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
 
-    struct addrinfo* bind_address;
-    getaddrinfo(0, "8080", &hints, &bind_address);
-
+    struct addrinfo* bind_address, *cur;
+    getaddrinfo("127.0.0.1", "8080", &hints, &bind_address);
 
     printf("Creating socket...\n");
     SOCKET socket_listen;
@@ -92,8 +91,24 @@ int main() {
         return 1;
     }
 
+    char name_buffer[1024];
+    char service_buffer[1024];
 
-    printf("Binding socket to local address...\n");
+    for (cur = bind_address; cur != 0; cur = cur->ai_next) {
+        getnameinfo(cur->ai_addr, cur->ai_addrlen,
+            name_buffer, sizeof(name_buffer),
+            service_buffer, sizeof(service_buffer),
+            0
+        );
+        printf("\tfound interface %s:%s\n", name_buffer, service_buffer);
+    }
+
+    getnameinfo(bind_address->ai_addr, bind_address->ai_addrlen,
+        name_buffer, sizeof(name_buffer),
+        service_buffer, sizeof(service_buffer),
+        0
+    );
+    printf("Binding socket to local address: %s:s\n", name_buffer, service_buffer);
     if (bind(socket_listen,
         bind_address->ai_addr, bind_address->ai_addrlen)) {
         fprintf(stderr, "bind() failed. (%d)\n", GETSOCKETERRNO());
@@ -142,13 +157,13 @@ int main() {
             "Content-Type: text/plain\r\n\r\n"
             "Local time is: ";
         int bytes_sent = send(socket_client, response, strlen(response), 0);
-        printf("Sent %d of %d bytes.\n", bytes_sent, (int)strlen(response));
+        printf("Sent %d of %d bytes (%s).\n", bytes_sent, (int)strlen(response), response);
 
         time_t timer;
         time(&timer);
         char* time_msg = ctime(&timer);
         bytes_sent = send(socket_client, time_msg, strlen(time_msg), 0);
-        printf("Sent %d of %d bytes.\n", bytes_sent, (int)strlen(time_msg));
+        printf("Sent %d of %d bytes. (%s)\n", bytes_sent, (int)strlen(time_msg), time_msg);
 
 
         printf("Closing connection...\n");
